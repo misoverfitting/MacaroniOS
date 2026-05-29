@@ -314,7 +314,7 @@ let maxEdgeWeight = 1;
 class Particle {
   constructor(edge, intensity) {
     this.edge = edge;
-    this.t = 0;
+    this.t = Math.random(); // start anywhere along the edge so they span the full length
     // High-intensity edges: slower, larger, more opaque — you can feel the weight
     this.speed = (0.012 - intensity * 0.008) / 3;   // ~0.0013–0.004
     this.r    = 1.0  + intensity * 3.5;        // 1–4.5 px radius
