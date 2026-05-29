@@ -315,7 +315,7 @@ class Particle {
     this.edge = edge;
     this.t = 0;
     // High-intensity edges: slower, larger, more opaque — you can feel the weight
-    this.speed = 0.012 - intensity * 0.008;   // 0.004–0.012
+    this.speed = (0.012 - intensity * 0.008) / 3;   // ~0.0013–0.004
     this.r    = 1.0  + intensity * 3.5;        // 1–4.5 px radius
     this.alpha = 0.35 + intensity * 0.55;      // 0.35–0.9 opacity
     this.color = EDGE_PARTICLE_COLOR[edge.type] || '200,200,200';
