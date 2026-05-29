@@ -80,6 +80,11 @@ def dashboard():
     return FileResponse("static/dashboard.html")
 
 
+@app.get("/bowl-graph", include_in_schema=False)
+def bowl_graph_page():
+    return FileResponse("static/bowl-graph.html")
+
+
 @app.get("/api/menu")
 def get_menu():
     with open("data/menu.json") as f:
@@ -143,6 +148,12 @@ def dashboard_data():
 def bowl_graph_insights():
     """Layer 2: Raw Bowl Graph analytics."""
     return bowl_graph.get_insights()
+
+
+@app.get("/api/bowl-graph/network")
+def bowl_graph_network():
+    """Layer 2: Full node/edge graph for visualization."""
+    return bowl_graph.get_network_data()
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")

@@ -182,6 +182,114 @@ class BowlGraph:
         rate = (multi / total_customers * 100) if total_customers else 0
         return {"repeat_customers": multi, "total_customers": total_customers, "reorder_rate_pct": round(rate, 1)}
 
+    def get_network_data(self) -> dict:
+        """Build the Bowl Graph network: nodes and edges for visualization."""
+        with open("data/menu.json") as f:
+            bowls = json.load(f)["bowls"]
+
+        stats = self.get_bowl_stats()
+        order_counts = {s["bowl_id"]: s["order_count"] for s in stats}
+        feedback_avgs = {s["bowl_id"]: (s["avg_feedback"] or 0) for s in stats}
+
+        nodes: list = []
+        edges: list = []
+        seen: set = set()
+
+        def add_node(n):
+            if n["id"] not in seen:
+                nodes.append(n)
+                seen.add(n["id"])
+
+        # ── Bowl nodes (central, heaviest) ──────────────────────────────────
+        for bowl in bowls:
+            add_node({
+                "id": f"bowl:{bowl['id']}",
+                "type": "bowl",
+                "label": bowl["name"],
+                "sublabel": bowl["tagline"],
+                "weight": max(order_counts.get(bowl["id"], 1), 1),
+                "meta": {
+                    "price": bowl["price"],
+                    "calories": bowl["calories"],
+                    "protein_g": bowl["protein_g"],
+                    "feedback": round(feedback_avgs.get(bowl["id"], 0), 1),
+                    "ingredients": bowl["ingredients"],
+                    "tags": bowl.get("tags", []),
+                    "prep_minutes": bowl["prep_minutes"],
+                },
+            })
+
+        # ── Ingredient + tag nodes with edges ────────────────────────────────
+        ing_bowls: dict = {}   # ing_id -> list of bowl_ids
+        tag_weight: dict = {}  # tag_id -> total order weight
+
+        for bowl in bowls:
+            vol = order_counts.get(bowl["id"], 1)
+            bid = f"bowl:{bowl['id']}"
+
+            for ing in bowl["ingredients"]:
+                iid = "ing:" + ing.replace(" ", "_")
+                ing_bowls.setdefault(iid, {"label": ing, "bowls": []})["bowls"].append(bowl["id"])
+                edges.append({"source": bid, "target": iid, "type": "contains", "weight": vol})
+
+            for tag in bowl.get("tags", []):
+                tid = f"tag:{tag}"
+                tag_weight[tid] = tag_weight.get(tid, 0) + vol
+                edges.append({"source": bid, "target": tid, "type": "tag", "weight": vol})
+
+        for iid, data in ing_bowls.items():
+            add_node({
+                "id": iid, "type": "ingredient",
+                "label": data["label"],
+                "sublabel": f"in {len(data['bowls'])} bowl(s)",
+                "weight": len(data["bowls"]),
+                "meta": {"bowls": data["bowls"]},
+            })
+
+        for tid, w in tag_weight.items():
+            add_node({
+                "id": tid, "type": "tag",
+                "label": tid.replace("tag:", "").replace("-", " "),
+                "sublabel": f"{w} orders",
+                "weight": w,
+                "meta": {},
+            })
+
+        # ── Preference segment nodes (from taste_signals) ────────────────────
+        with self._conn() as conn:
+            segs = conn.execute("""
+                SELECT flavor_pref, COUNT(*) AS cnt,
+                       GROUP_CONCAT(DISTINCT recommended_bowl) AS bowls
+                FROM taste_signals
+                WHERE flavor_pref IS NOT NULL AND flavor_pref != ''
+                GROUP BY flavor_pref
+            """).fetchall()
+
+        for row in [dict(r) for r in segs]:
+            sid = f"seg:{row['flavor_pref']}"
+            add_node({
+                "id": sid, "type": "segment",
+                "label": f"{row['flavor_pref']} seekers",
+                "sublabel": f"{row['cnt']} signals",
+                "weight": row["cnt"],
+                "meta": {},
+            })
+            for bowl_id in (row["bowls"] or "").split(",")[:3]:
+                if f"bowl:{bowl_id}" in seen:
+                    edges.append({"source": sid, "target": f"bowl:{bowl_id}",
+                                  "type": "prefers", "weight": row["cnt"]})
+
+        total_orders = sum(order_counts.values())
+        return {
+            "nodes": nodes,
+            "edges": edges,
+            "meta": {
+                "total_nodes": len(nodes),
+                "total_edges": len(edges),
+                "total_orders": total_orders,
+            },
+        }
+
     def get_insights(self) -> dict:
         stats = self.get_bowl_stats()
         hourly = self.get_hourly_volume()
