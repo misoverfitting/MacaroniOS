@@ -294,6 +294,7 @@ let simulation = null;
 let particles = [];
 let selectedNode = null;
 let animFrame = null;
+let currentTransform = { x: 0, y: 0, k: 1 };
 
 // ── Canvas particle system ─────────────────────────────────────────────────
 
@@ -363,7 +364,11 @@ function spawnParticles(edges) {
 
 function drawParticles() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(currentTransform.x, currentTransform.y);
+  ctx.scale(currentTransform.k, currentTransform.k);
   particles = particles.filter(p => { p.draw(); return p.update(); });
+  ctx.restore();
 }
 
 // ── D3 Graph ───────────────────────────────────────────────────────────────
@@ -430,6 +435,7 @@ function buildGraph(data) {
   const container = svg.append('g').attr('class','zoom-container');
   svg.call(d3.zoom().scaleExtent([0.3, 4]).on('zoom', e => {
     container.attr('transform', e.transform);
+    currentTransform = e.transform;
   }));
 
   // ── Edges ────────────────────────────────────────────────────────────────
