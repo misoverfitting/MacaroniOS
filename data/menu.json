@@ -1,0 +1,103 @@
+{
+  "bowls": [
+    {
+      "id": "classic-hut",
+      "name": "Classic Hut Bowl",
+      "tagline": "The one that started it all",
+      "price": 12.00,
+      "calories": 520,
+      "protein_g": 28,
+      "carbs_g": 58,
+      "fat_g": 16,
+      "base": "elbow macaroni",
+      "ingredients": ["scrambled eggs", "sharp cheddar", "applewood bacon bits", "chive cream sauce"],
+      "tags": ["savory", "classic", "protein-heavy", "kid-friendly", "comfort"],
+      "prep_minutes": 5,
+      "travel_rating": 5
+    },
+    {
+      "id": "green-machine",
+      "name": "Green Machine",
+      "tagline": "Plant-forward. Protein-loaded. No apologies.",
+      "price": 13.50,
+      "calories": 440,
+      "protein_g": 32,
+      "carbs_g": 52,
+      "fat_g": 9,
+      "base": "elbow macaroni",
+      "ingredients": ["egg whites", "avocado", "baby spinach", "green goddess sauce", "pepitas"],
+      "tags": ["savory", "vegetarian", "protein-heavy", "light", "adventurous", "gluten-free-friendly"],
+      "prep_minutes": 6,
+      "travel_rating": 4
+    },
+    {
+      "id": "sweet-kugel",
+      "name": "The Sweet Kugel",
+      "tagline": "Comfort from another timeline",
+      "price": 11.00,
+      "calories": 490,
+      "protein_g": 12,
+      "carbs_g": 78,
+      "fat_g": 14,
+      "base": "elbow macaroni",
+      "ingredients": ["cinnamon butter", "brown sugar glaze", "dried cranberries", "golden raisins", "vanilla cream"],
+      "tags": ["sweet", "comfort", "classic", "kid-friendly", "vegetarian", "dairy-free-friendly"],
+      "prep_minutes": 5,
+      "travel_rating": 5
+    },
+    {
+      "id": "protein-power",
+      "name": "Protein Power Bowl",
+      "tagline": "Fuel for what comes next",
+      "price": 15.00,
+      "calories": 610,
+      "protein_g": 48,
+      "carbs_g": 55,
+      "fat_g": 18,
+      "base": "elbow macaroni",
+      "ingredients": ["grilled chicken", "greek yogurt sauce", "roasted peppers", "feta crumble", "olive oil"],
+      "tags": ["savory", "protein-heavy", "adventurous", "gluten-free-friendly"],
+      "prep_minutes": 7,
+      "travel_rating": 4
+    },
+    {
+      "id": "the-adventurer",
+      "name": "The Adventurer",
+      "tagline": "Breakfast for those who believe in dinner energy",
+      "price": 17.00,
+      "calories": 680,
+      "protein_g": 42,
+      "carbs_g": 60,
+      "fat_g": 24,
+      "base": "elbow macaroni",
+      "ingredients": ["sliced steak", "chimichurri", "fried egg", "crispy shallots", "aged parmesan"],
+      "tags": ["savory", "adventurous", "protein-heavy", "bold"],
+      "prep_minutes": 9,
+      "travel_rating": 3
+    },
+    {
+      "id": "office-bundle",
+      "name": "The Office Bundle",
+      "tagline": "Bowls for the whole team. One smart order.",
+      "price": 44.00,
+      "calories": 520,
+      "protein_g": 28,
+      "carbs_g": 58,
+      "fat_g": 16,
+      "base": "elbow macaroni",
+      "ingredients": ["4x Classic Hut Bowls", "customization cards", "group sauce kit"],
+      "tags": ["savory", "family", "office", "catering", "classic"],
+      "prep_minutes": 12,
+      "travel_rating": 5,
+      "serves": 4
+    }
+  ],
+  "modifiers": [
+    {"id": "extra-protein", "name": "Extra Protein", "price": 2.50},
+    {"id": "gluten-free-pasta", "name": "GF Pasta Swap", "price": 1.50},
+    {"id": "extra-cheese", "name": "Extra Cheese", "price": 1.00},
+    {"id": "no-dairy", "name": "No Dairy", "price": 0},
+    {"id": "add-egg", "name": "Add Egg", "price": 2.00},
+    {"id": "spicy-sauce", "name": "Spicy Sauce Upgrade", "price": 0.75}
+  ]
+}

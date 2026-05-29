@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Macaroni Hut — Breakfast Hut of the Future</title>
+  <style>
+    :root {
+      --bg: #0C0A08;
+      --surface: #181410;
+      --surface2: #221E18;
+      --border: #2C2720;
+      --text: #F2EDE3;
+      --dim: #8A7D6A;
+      --yellow: #F4C430;
+      --orange: #E8621A;
+      --green: #5AAB74;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; line-height: 1.5; min-height: 100vh; }
+
+    /* ── Header ── */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(12,10,8,0.92); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; height: 60px;
+    }
+    .logo { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; }
+    .logo em { color: var(--yellow); font-style: normal; }
+    .nav { display: flex; gap: 8px; align-items: center; }
+    .nav-link { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 14px; padding: 6px 12px; border-radius: 8px; transition: color 0.15s, background 0.15s; }
+    .nav-link:hover { color: var(--text); background: var(--surface2); }
+    .nav-cta { background: var(--yellow); color: #000; font-weight: 700; font-size: 14px; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: opacity 0.15s; }
+    .nav-cta:hover { opacity: 0.88; }
+
+    /* ── Screen system ── */
+    .screen { display: none; padding-top: 60px; min-height: 100vh; }
+    .screen.active { display: block; }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: calc(100vh - 60px);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 60px 24px 80px;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(244,196,48,0.12) 0%, transparent 60%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--yellow); font-size: 11px; font-weight: 600;
+      letter-spacing: 1.2px; text-transform: uppercase;
+      padding: 6px 14px; border-radius: 99px; margin-bottom: 36px;
+    }
+    .hero-badge::before { content: '●'; font-size: 8px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .hero h1 {
+      font-size: clamp(40px, 8vw, 84px); font-weight: 800;
+      letter-spacing: -3px; line-height: 1.05;
+      margin-bottom: 24px; max-width: 780px;
+    }
+    .hero h1 em { color: var(--yellow); font-style: normal; }
+    .hero-sub {
+      font-size: 18px; color: var(--dim); max-width: 500px;
+      margin: 0 auto 44px; line-height: 1.65;
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 72px; }
+    .btn-primary { background: var(--yellow); color: #000; font-weight: 700; font-size: 16px; border: none; padding: 14px 28px; border-radius: 10px; cursor: pointer; transition: transform 0.15s, opacity 0.15s; }
+    .btn-primary:hover { transform: translateY(-1px); opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-secondary { background: var(--surface2); color: var(--text); font-size: 16px; font-weight: 600; border: 1px solid var(--border); padding: 14px 28px; border-radius: 10px; cursor: pointer; transition: background 0.15s; }
+    .btn-secondary:hover { background: var(--border); }
+    .hero-stats { display: flex; gap: 48px; flex-wrap: wrap; justify-content: center; }
+    .hero-stat strong { display: block; font-size: 32px; font-weight: 800; color: var(--yellow); letter-spacing: -1px; }
+    .hero-stat span { font-size: 13px; color: var(--dim); }
+
+    /* ── Quiz ── */
+    .quiz-wrap { max-width: 580px; margin: 0 auto; padding: 52px 24px 80px; }
+    .progress-bar { height: 2px; background: var(--surface2); border-radius: 99px; margin-bottom: 48px; }
+    .progress-fill { height: 100%; background: var(--yellow); border-radius: 99px; transition: width 0.4s ease; }
+    .q-step { font-size: 12px; color: var(--yellow); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; margin-bottom: 10px; }
+    .q-text { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 32px; }
+    .opt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 36px; }
+    .opt-card { background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius); padding: 20px 16px; cursor: pointer; text-align: center; transition: all 0.18s; user-select: none; }
+    .opt-card:hover { border-color: var(--dim); background: var(--surface2); }
+    .opt-card.selected { border-color: var(--yellow); background: rgba(244,196,48,0.07); }
+    .opt-emoji { font-size: 26px; margin-bottom: 8px; }
+    .opt-label { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .opt-desc { font-size: 11px; color: var(--dim); line-height: 1.4; }
+    .opt-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 36px; }
+    .opt-row { background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius); padding: 14px 18px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.18s; user-select: none; }
+    .opt-row:hover { border-color: var(--dim); }
+    .opt-row.selected { border-color: var(--yellow); background: rgba(244,196,48,0.07); }
+    .opt-check { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 5px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.18s; }
+    .opt-row.selected .opt-check { background: var(--yellow); border-color: var(--yellow); color: #000; font-weight: 700; }
+    .opt-row-text strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .opt-row-text small { font-size: 12px; color: var(--dim); }
+    .quiz-nav { display: flex; justify-content: space-between; align-items: center; }
+    .btn-back { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 14px; padding: 8px 0; transition: color 0.15s; }
+    .btn-back:hover { color: var(--text); }
+
+    /* ── Result ── */
+    .result-wrap { max-width: 660px; margin: 0 auto; padding: 52px 24px 80px; }
+    .result-header { text-align: center; margin-bottom: 40px; }
+    .result-eyebrow { font-size: 11px; color: var(--yellow); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin-bottom: 14px; }
+    .result-name { font-size: 38px; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; }
+    .result-reason { color: var(--dim); font-size: 16px; max-width: 480px; margin: 0 auto; line-height: 1.65; }
+    .bowl-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 28px; margin-bottom: 16px; position: relative; overflow: hidden;
+    }
+    .bowl-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--yellow), var(--orange)); }
+    .bowl-card-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .bowl-card-tagline { color: var(--dim); font-size: 13px; margin-bottom: 20px; }
+    .bowl-stats { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 18px; }
+    .bowl-stat label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin-bottom: 2px; }
+    .bowl-stat span { font-size: 20px; font-weight: 700; }
+    .bowl-stat span.price { color: var(--yellow); }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+    .chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--dim); }
+    .hint-box { background: rgba(244,196,48,0.07); border: 1px solid rgba(244,196,48,0.2); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--yellow); margin-bottom: 20px; }
+    .bowl-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .runner-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; gap: 16px; }
+    .runner-label { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .runner-name { font-size: 15px; font-weight: 600; }
+    .runner-tagline { font-size: 12px; color: var(--dim); margin-top: 2px; }
+
+    /* ── Menu ── */
+    .menu-wrap { max-width: 940px; margin: 0 auto; padding: 52px 24px 80px; }
+    .section-header { margin-bottom: 36px; }
+    .section-title { font-size: 34px; font-weight: 800; letter-spacing: -1px; margin-bottom: 6px; }
+    .section-sub { color: var(--dim); font-size: 15px; }
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 14px; }
+    .menu-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; transition: border-color 0.18s, transform 0.18s; }
+    .menu-card:hover { border-color: var(--dim); transform: translateY(-2px); }
+    .menu-card-name { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+    .menu-card-tagline { color: var(--dim); font-size: 12px; margin-bottom: 14px; line-height: 1.4; }
+    .menu-card-meta { display: flex; gap: 16px; font-size: 12px; color: var(--dim); margin-bottom: 14px; }
+    .menu-card-meta strong { color: var(--text); }
+    .menu-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+    .menu-price { font-size: 20px; font-weight: 700; color: var(--yellow); }
+    .btn-order { background: var(--yellow); color: #000; font-weight: 700; font-size: 13px; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: opacity 0.15s; }
+    .btn-order:hover { opacity: 0.85; }
+
+    /* ── Order Confirmation ── */
+    .order-wrap { max-width: 460px; margin: 0 auto; padding: 80px 24px; text-align: center; }
+    .order-icon { font-size: 72px; margin-bottom: 24px; }
+    .order-title { font-size: 30px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+    .order-sub { color: var(--dim); font-size: 16px; margin-bottom: 40px; }
+    .eta-number { font-size: 72px; font-weight: 800; color: var(--yellow); letter-spacing: -3px; line-height: 1; }
+    .eta-label { color: var(--dim); font-size: 14px; margin-bottom: 32px; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+    .order-id-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: var(--dim); word-break: break-all; margin-bottom: 28px; text-align: left; }
+    .order-id-box small { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+
+    /* ── Utility ── */
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.2); border-top-color: #000; border-radius: 50%; animation: spin 0.65s linear infinite; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast { position: fixed; bottom: 28px; right: 28px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 13px; transform: translateY(80px); opacity: 0; transition: all 0.3s ease; z-index: 999; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(12,10,8,0.85); border-top: 1px solid var(--border); padding: 7px 24px; font-size: 11px; color: var(--dim); display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); z-index: 50; }
+    .footer-bar a { color: var(--dim); text-decoration: none; }
+    .footer-bar a:hover { color: var(--yellow); }
+    .dot-live { display: inline-block; width: 6px; height: 6px; background: var(--green); border-radius: 50%; margin-right: 6px; animation: pulse 2s infinite; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo" onclick="showScreen('hero')">Macaroni<em>Hut</em></div>
+  <nav class="nav">
+    <button class="nav-link" onclick="loadAndShowMenu()">Menu</button>
+    <button class="nav-link" onclick="window.open('/dashboard','_blank')">Hut OS ↗</button>
+    <button class="nav-cta" onclick="startQuiz()">Find My Bowl</button>
+  </nav>
+</header>
+
+<div id="toast" class="toast"></div>
+
+<div class="footer-bar">
+  <span><span class="dot-live"></span>MacaroniOS v0.1 — Macaroni Intelligence Active</span>
+  <span>The restaurant is the interface. <a href="/dashboard">The platform is Hut OS →</a></span>
+</div>
+
+<!-- ── Hero ─────────────────────────────────────────────────────────────── -->
+<div id="screen-hero" class="screen active">
+  <div class="hero">
+    <div class="hero-badge">AI-First · Breakfast Platform · v0.1</div>
+    <h1>What if macaroni<br>was <em>breakfast?</em></h1>
+    <p class="hero-sub">AI-powered bowls that learn what you crave. Warm, cheesy, and built for the future of food.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="startQuiz()">Find My Bowl →</button>
+      <button class="btn-secondary" onclick="loadAndShowMenu()">Browse Menu</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>6</strong><span>Signature Bowls</span></div>
+      <div class="hero-stat"><strong>AI</strong><span>Recommendations</span></div>
+      <div class="hero-stat"><strong>∞</strong><span>Modifications</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Quiz ──────────────────────────────────────────────────────────────── -->
+<div id="screen-questions" class="screen">
+  <div class="quiz-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="q-progress" style="width:14%"></div></div>
+    <div class="q-step" id="q-step">Question 1 of 7</div>
+    <div class="q-text" id="q-text"></div>
+    <div id="q-options"></div>
+    <div class="quiz-nav">
+      <button class="btn-back" id="q-back" onclick="prevQ()">← Back</button>
+      <button class="btn-primary" id="q-next" onclick="nextQ()" disabled>Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Result ─────────────────────────────────────────────────────────────── -->
+<div id="screen-result" class="screen">
+  <div class="result-wrap">
+    <div class="result-header">
+      <div class="result-eyebrow">Macaroni Intelligence has spoken</div>
+      <div class="result-name" id="res-name"></div>
+      <div class="result-reason" id="res-reason"></div>
+    </div>
+    <div id="res-bowl"></div>
+    <div id="res-runner"></div>
+  </div>
+</div>
+
+<!-- ── Menu ───────────────────────────────────────────────────────────────── -->
+<div id="screen-menu" class="screen">
+  <div class="menu-wrap">
+    <div class="section-header">
+      <div class="section-title">The Menu</div>
+      <div class="section-sub">Six bowls. Infinite combinations. One right one for right now.</div>
+    </div>
+    <div class="menu-grid" id="menu-grid"></div>
+  </div>
+</div>
+
+<!-- ── Order Confirmation ─────────────────────────────────────────────────── -->
+<div id="screen-order" class="screen">
+  <div class="order-wrap">
+    <div class="order-icon">🍝</div>
+    <div class="order-title">Order Received</div>
+    <div class="order-sub">The Hut has your bowl. The Bowl Graph has your data.</div>
+    <div class="eta-number" id="order-eta">8</div>
+    <div class="eta-label">minutes to ready</div>
+    <div class="order-id-box">
+      <small>Order ID</small>
+      <span id="order-id-text">—</span>
+    </div>
+    <button class="btn-secondary" onclick="showScreen('hero')">Order Another Bowl</button>
+  </div>
+</div>
+
+<script>
+const state = { answers: {}, currentQ: 0, result: null, menu: null };
+
+const QUESTIONS = [
+  {
+    id: 'hunger_level', text: 'How hungry are you?', type: 'single',
+    opts: [
+      { v:'light',       emoji:'🌱', label:'A little',     desc:'Light morning, light bowl' },
+      { v:'moderate',    emoji:'🔥', label:'Properly hungry', desc:'Time for a real breakfast' },
+      { v:'very_hungry', emoji:'⚡', label:'Very hungry',  desc:'Carry me to dinner' },
+    ]
+  },
+  {
+    id: 'flavor_pref', text: 'Sweet or savory?', type: 'single',
+    opts: [
+      { v:'sweet',         emoji:'🍯', label:'Sweet',        desc:'Warm, comforting, nostalgic' },
+      { v:'savory',        emoji:'🧀', label:'Savory',       desc:'Eggs, cheese, bold sauces' },
+      { v:'no_preference', emoji:'⚖️', label:'Either works', desc:'Let Macaroni Intelligence decide' },
+    ]
+  },
+  {
+    id: 'mood', text: 'Classic or adventurous?', type: 'single',
+    opts: [
+      { v:'classic',     emoji:'🏡', label:'Classic',     desc:'Familiar, trusted, reliable' },
+      { v:'adventurous', emoji:'🗺', label:'Adventurous', desc:'Surprise me — push the edge' },
+    ]
+  },
+  {
+    id: 'energy_goal', text: 'What energy are you going for?', type: 'single',
+    opts: [
+      { v:'protein_heavy',    emoji:'💪', label:'High protein', desc:'Lean, efficient, strong' },
+      { v:'comfort_forward',  emoji:'🛋', label:'Comfort',      desc:'Warm, filling, satisfying' },
+      { v:'light',            emoji:'🍃', label:'Light fuel',   desc:'Clean, not heavy, present' },
+    ]
+  },
+  {
+    id: 'timing', text: 'Eating now or saving for later?', type: 'single',
+    opts: [
+      { v:'eating_now',      emoji:'⏱', label:'Right now',    desc:'Eat it hot, eat it fresh' },
+      { v:'saving_for_later', emoji:'📦', label:'Later / delivery', desc:'Needs to travel well' },
+    ]
+  },
+  {
+    id: 'group_type', text: "Who's eating?", type: 'single',
+    opts: [
+      { v:'myself',      emoji:'🙋',    label:'Just me',      desc:'Solo bowl, full attention' },
+      { v:'family',      emoji:'👨‍👩‍👧', label:'My family',   desc:'Kids involved, needs to work for all' },
+      { v:'office_group', emoji:'🏢',   label:'Office group', desc:'Feeding the team' },
+    ]
+  },
+  {
+    id: 'dietary', text: 'Any dietary needs?', type: 'multi',
+    opts: [
+      { v:'none',         emoji:'✅', label:'No restrictions',   desc:'Eat everything' },
+      { v:'vegetarian',   emoji:'🥬', label:'Vegetarian',        desc:'No meat please' },
+      { v:'gluten_free',  emoji:'🌾', label:'Gluten-free',       desc:'GF pasta available' },
+      { v:'dairy_free',   emoji:'🥛', label:'Dairy-free',        desc:'No dairy products' },
+    ]
+  },
+];
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function startQuiz() {
+  state.answers = {}; state.currentQ = 0;
+  showScreen('questions'); renderQ();
+}
+
+function renderQ() {
+  const q = QUESTIONS[state.currentQ];
+  const total = QUESTIONS.length;
+  const pct = ((state.currentQ + 1) / total * 100).toFixed(0);
+  document.getElementById('q-progress').style.width = pct + '%';
+  document.getElementById('q-step').textContent = `Question ${state.currentQ + 1} of ${total}`;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('q-back').style.visibility = state.currentQ === 0 ? 'hidden' : 'visible';
+  document.getElementById('q-next').textContent = state.currentQ === total - 1 ? 'Get My Bowl →' : 'Continue →';
+
+  const sel = state.answers[q.id] || (q.type === 'multi' ? [] : null);
+  const container = document.getElementById('q-options');
+
+  if (q.type === 'multi') {
+    container.innerHTML = '<div class="opt-list">' + q.opts.map(o => `
+      <div class="opt-row ${sel.includes(o.v) ? 'selected' : ''}" onclick="toggleMulti('${q.id}','${o.v}')">
+        <div class="opt-check">${sel.includes(o.v) ? '✓' : ''}</div>
+        <span style="font-size:20px">${o.emoji}</span>
+        <div class="opt-row-text">
+          <strong>${o.label}</strong>
+          <small>${o.desc}</small>
+        </div>
+      </div>
+    `).join('') + '</div>';
+  } else {
+    container.innerHTML = '<div class="opt-grid">' + q.opts.map(o => `
+      <div class="opt-card ${sel === o.v ? 'selected' : ''}" onclick="selectSingle('${q.id}','${o.v}')">
+        <div class="opt-emoji">${o.emoji}</div>
+        <div class="opt-label">${o.label}</div>
+        <div class="opt-desc">${o.desc}</div>
+      </div>
+    `).join('') + '</div>';
+  }
+  updateNextBtn();
+}
+
+function selectSingle(qId, val) {
+  state.answers[qId] = val;
+  renderQ();
+}
+
+function toggleMulti(qId, val) {
+  if (!state.answers[qId]) state.answers[qId] = [];
+  const arr = state.answers[qId];
+  if (val === 'none') {
+    state.answers[qId] = arr.includes('none') ? [] : ['none'];
+  } else {
+    const i = arr.indexOf(val);
+    if (i >= 0) arr.splice(i, 1);
+    else { arr.push(val); const ni = arr.indexOf('none'); if (ni >= 0) arr.splice(ni, 1); }
+  }
+  renderQ();
+}
+
+function updateNextBtn() {
+  const q = QUESTIONS[state.currentQ];
+  const ans = state.answers[q.id];
+  document.getElementById('q-next').disabled = q.type === 'multi' ? !(ans && ans.length) : !ans;
+}
+
+function prevQ() { if (state.currentQ > 0) { state.currentQ--; renderQ(); } }
+
+async function nextQ() {
+  if (state.currentQ < QUESTIONS.length - 1) {
+    state.currentQ++; renderQ();
+  } else {
+    await submitQuiz();
+  }
+}
+
+async function submitQuiz() {
+  const btn = document.getElementById('q-next');
+  btn.innerHTML = '<span class="spinner"></span> Thinking...';
+  btn.disabled = true;
+  try {
+    const payload = {
+      hunger_level: state.answers.hunger_level || 'moderate',
+      flavor_pref: state.answers.flavor_pref || 'no_preference',
+      mood: state.answers.mood || 'classic',
+      energy_goal: state.answers.energy_goal || 'comfort_forward',
+      timing: state.answers.timing || 'eating_now',
+      group_type: state.answers.group_type || 'myself',
+      dietary: state.answers.dietary || ['none'],
+    };
+    const res = await fetch('/api/recommend', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    state.result = data;
+    renderResult(data);
+    showScreen('result');
+  } catch {
+    showToast('Could not get recommendation. Is the server running?');
+    btn.innerHTML = 'Get My Bowl →';
+    btn.disabled = false;
+  }
+}
+
+function renderResult(data) {
+  const b = data.recommended;
+  const r = data.runner_up;
+  document.getElementById('res-name').textContent = b.name;
+  document.getElementById('res-reason').textContent = data.reason;
+
+  document.getElementById('res-bowl').innerHTML = `
+    <div class="bowl-card">
+      <div class="bowl-card-name">${b.name}</div>
+      <div class="bowl-card-tagline">${b.tagline}</div>
+      <div class="bowl-stats">
+        <div class="bowl-stat"><label>Price</label><span class="price">$${b.price.toFixed(2)}</span></div>
+        <div class="bowl-stat"><label>Calories</label><span>${b.calories}</span></div>
+        <div class="bowl-stat"><label>Protein</label><span>${b.protein_g}g</span></div>
+        <div class="bowl-stat"><label>Prep</label><span>${b.prep_minutes}m</span></div>
+      </div>
+      <div class="chips">${b.ingredients.map(i => `<span class="chip">${i}</span>`).join('')}</div>
+      ${data.modifier_suggestion ? `<div class="hint-box">💡 ${data.modifier_suggestion}</div>` : ''}
+      <div class="bowl-actions">
+        <button class="btn-primary" onclick="orderBowl('${b.id}')">Order This Bowl →</button>
+        <button class="btn-secondary" onclick="loadAndShowMenu()">Browse All Bowls</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('res-runner').innerHTML = r ? `
+    <div class="runner-card">
+      <div>
+        <div class="runner-label">Also considered</div>
+        <div class="runner-name">${r.name}</div>
+        <div class="runner-tagline">${r.tagline}</div>
+      </div>
+      <button class="btn-secondary" style="font-size:13px;padding:10px 16px;white-space:nowrap" onclick="orderBowl('${r.id}')">Order Instead</button>
+    </div>
+  ` : '';
+}
+
+async function loadMenu() {
+  if (state.menu) return;
+  try {
+    const res = await fetch('/api/menu');
+    const data = await res.json();
+    state.menu = data.bowls;
+    document.getElementById('menu-grid').innerHTML = state.menu.map(b => `
+      <div class="menu-card">
+        <div class="menu-card-name">${b.name}</div>
+        <div class="menu-card-tagline">${b.tagline}</div>
+        <div class="menu-card-meta">
+          <span><strong>${b.calories}</strong> cal</span>
+          <span><strong>${b.protein_g}g</strong> protein</span>
+          <span><strong>${b.prep_minutes}m</strong> prep</span>
+        </div>
+        <div class="chips">${b.ingredients.slice(0,3).map(i => `<span class="chip">${i}</span>`).join('')}</div>
+        <div class="menu-card-footer">
+          <span class="menu-price">$${b.price.toFixed(2)}</span>
+          <button class="btn-order" onclick="orderBowl('${b.id}')">Order</button>
+        </div>
+      </div>
+    `).join('');
+  } catch {
+    document.getElementById('menu-grid').innerHTML = '<p style="color:var(--dim)">Could not load menu — is the server running?</p>';
+  }
+}
+
+async function loadAndShowMenu() {
+  showScreen('menu');
+  await loadMenu();
+}
+
+async function orderBowl(bowlId) {
+  try {
+    const res = await fetch('/api/orders', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bowl_id: bowlId, modifications: [], quantity: 1 }),
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    document.getElementById('order-eta').textContent = data.eta_minutes;
+    document.getElementById('order-id-text').textContent = data.order_id;
+    showScreen('order');
+  } catch {
+    showToast('Order failed — is the server running?');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>

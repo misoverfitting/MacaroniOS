@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hut OS — MacaroniOS Operations</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #080706;
+      --surface: #111009;
+      --surface2: #1C1914;
+      --border: #28241C;
+      --text: #F2EDE3;
+      --dim: #7A7060;
+      --yellow: #F4C430;
+      --orange: #E8621A;
+      --green: #5AAB74;
+      --red: #E05444;
+      --blue: #4A8FD4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; }
+
+    /* ── Header ── */
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 0 28px; height: 56px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 100; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
+    .logo em { color: var(--yellow); font-style: normal; }
+    .os-badge { background: var(--surface2); border: 1px solid var(--border); color: var(--dim); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .live-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--green); }
+    .live-dot::before { content: ''; width: 6px; height: 6px; background: var(--green); border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .header-link { color: var(--dim); font-size: 13px; text-decoration: none; padding: 6px 12px; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); transition: color 0.15s; cursor: pointer; }
+    .header-link:hover { color: var(--text); }
+    .refresh-btn { background: none; border: 1px solid var(--border); color: var(--dim); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.15s; }
+    .refresh-btn:hover { border-color: var(--yellow); color: var(--yellow); }
+
+    /* ── Layout ── */
+    .main { padding: 28px; display: flex; flex-direction: column; gap: 24px; max-width: 1400px; margin: 0 auto; }
+
+    /* ── Metric cards ── */
+    .metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+    .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .metric-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin-bottom: 8px; }
+    .metric-value { font-size: 32px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+    .metric-sub { font-size: 12px; color: var(--dim); margin-top: 6px; }
+    .metric-value.yellow { color: var(--yellow); }
+    .metric-value.green { color: var(--green); }
+    .metric-value.orange { color: var(--orange); }
+
+    /* ── Row ── */
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 900px) { .row { grid-template-columns: 1fr; } }
+    .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    @media (max-width: 1100px) { .row-3 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 700px) { .row-3 { grid-template-columns: 1fr; } }
+
+    /* ── Panel ── */
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .panel-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .panel-meta { font-size: 11px; color: var(--dim); }
+    .panel-body { padding: 20px; }
+
+    /* ── Chart ── */
+    .chart-wrap { position: relative; height: 200px; }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .badge-yellow { background: rgba(244,196,48,0.15); color: var(--yellow); }
+    .badge-green { background: rgba(90,171,116,0.15); color: var(--green); }
+    .badge-dim { background: var(--surface2); color: var(--dim); }
+    .badge-red { background: rgba(224,84,68,0.15); color: var(--red); }
+
+    /* ── Stars ── */
+    .stars { color: var(--yellow); letter-spacing: -2px; }
+
+    /* ── Alerts ── */
+    .alert { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 8px; margin-bottom: 8px; }
+    .alert:last-child { margin-bottom: 0; }
+    .alert-warning { background: rgba(232,98,26,0.1); border: 1px solid rgba(232,98,26,0.25); }
+    .alert-info { background: rgba(74,143,212,0.1); border: 1px solid rgba(74,143,212,0.25); }
+    .alert-ok { background: rgba(90,171,116,0.1); border: 1px solid rgba(90,171,116,0.25); }
+    .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .alert-text strong { display: block; font-size: 13px; margin-bottom: 2px; }
+    .alert-text small { font-size: 12px; color: var(--dim); }
+
+    /* ── Forecast ── */
+    .forecast-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .forecast-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin-bottom: 6px; }
+    .forecast-value { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .forecast-note { font-size: 12px; color: var(--dim); }
+
+    /* ── Loading ── */
+    .loading { display: flex; align-items: center; justify-content: center; height: 200px; color: var(--dim); gap: 10px; }
+    .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--yellow); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ts { font-size: 11px; color: var(--dim); }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo">Macaroni<em>Hut</em></div>
+    <div class="os-badge">Hut OS v0.1</div>
+  </div>
+  <div class="header-right">
+    <span class="live-dot">Live</span>
+    <span class="ts" id="last-updated">—</span>
+    <button class="refresh-btn" onclick="loadDashboard()">↻ Refresh</button>
+    <a class="header-link" href="/">Customer Interface ↗</a>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- Metrics -->
+  <div class="metrics" id="metrics">
+    <div class="loading"><div class="spinner"></div> Loading platform data…</div>
+  </div>
+
+  <!-- Chart + Bowl Performance -->
+  <div class="row">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Hourly Order Volume</span>
+        <span class="panel-meta">7-day rolling average</span>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap"><canvas id="hourly-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Bowl Performance</span>
+        <span class="panel-meta">Bowl Graph — Layer 2</span>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <table id="bowl-table">
+          <thead><tr><th>Bowl</th><th>Orders</th><th>Satisfaction</th><th>Revenue est.</th></tr></thead>
+          <tbody id="bowl-tbody"><tr><td colspan="4" style="color:var(--dim);padding:20px">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Orders + Alerts + Forecast -->
+  <div class="row-3">
+    <div class="panel" style="grid-column: span 2">
+      <div class="panel-header">
+        <span class="panel-title">Recent Orders</span>
+        <span class="panel-meta">Layer 1 — The Hut</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="orders-table">
+          <thead><tr><th>Order ID</th><th>Bowl</th><th>Group</th><th>Status</th><th>Satisfaction</th><th>Time</th></tr></thead>
+          <tbody id="orders-tbody"><tr><td colspan="6" style="color:var(--dim);padding:20px">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Inventory Alerts</span><span class="panel-meta">Hut OS</span></div>
+        <div class="panel-body" id="alerts-body"><div style="color:var(--dim)">Loading…</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Demand Forecast</span><span class="panel-meta">Next Peak</span></div>
+        <div class="panel-body" id="forecast-body"><div style="color:var(--dim)">Loading…</div></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+let hourlyChart = null;
+
+async function loadDashboard() {
+  try {
+    const res = await fetch('/api/dashboard/data');
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    renderMetrics(data.summary);
+    renderHourlyChart(data.hourly_volume);
+    renderBowlTable(data.bowl_performance);
+    renderOrdersTable(data.recent_orders);
+    renderAlerts(data.inventory_alerts);
+    renderForecast(data.demand_forecast);
+    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  } catch (e) {
+    document.getElementById('metrics').innerHTML = '<div style="color:var(--dim);padding:20px">Could not reach MacaroniOS backend. Run: <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">uvicorn main:app --reload</code></div>';
+  }
+}
+
+function renderMetrics(s) {
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric-card">
+      <div class="metric-label">Total Orders</div>
+      <div class="metric-value yellow">${s.total_orders.toLocaleString()}</div>
+      <div class="metric-sub">Bowl Graph data points</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Avg Satisfaction</div>
+      <div class="metric-value green">${s.avg_satisfaction > 0 ? s.avg_satisfaction.toFixed(1) + ' / 5' : '—'}</div>
+      <div class="metric-sub">From rated orders</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Revenue (est.)</div>
+      <div class="metric-value">$${s.revenue_est.toLocaleString('en-US', {minimumFractionDigits:0,maximumFractionDigits:0})}</div>
+      <div class="metric-sub">All-time, demo data</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Reorder Rate</div>
+      <div class="metric-value orange">${s.reorder_rate_pct}%</div>
+      <div class="metric-sub">Customers with 2+ orders</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Peak Hour</div>
+      <div class="metric-value">${s.peak_hour}</div>
+      <div class="metric-sub">Highest demand window</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Top Bowl</div>
+      <div class="metric-value" style="font-size:18px;letter-spacing:-0.5px;padding-top:7px">${s.top_bowl}</div>
+      <div class="metric-sub">Most ordered</div>
+    </div>
+  `;
+}
+
+function renderHourlyChart(hourly) {
+  const labels = hourly.map(h => h.hour === 0 ? '12a' : h.hour < 12 ? h.hour + 'a' : h.hour === 12 ? '12p' : (h.hour - 12) + 'p');
+  const values = hourly.map(h => h.orders);
+
+  if (hourlyChart) hourlyChart.destroy();
+  const ctx = document.getElementById('hourly-chart').getContext('2d');
+  hourlyChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: values.map(v => {
+          const max = Math.max(...values);
+          return v === max ? 'rgba(244,196,48,0.85)' : 'rgba(244,196,48,0.25)';
+        }),
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw} orders` } } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#7A7060', font: { size: 11 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#7A7060', font: { size: 11 } } },
+      }
+    }
+  });
+}
+
+function renderBowlTable(bowls) {
+  const tbody = document.getElementById('bowl-tbody');
+  tbody.innerHTML = bowls.map(b => {
+    const stars = b.avg_feedback > 0
+      ? '★'.repeat(Math.round(b.avg_feedback)) + '☆'.repeat(5 - Math.round(b.avg_feedback))
+      : '—';
+    const rev = ((b.order_count || 0) * (b.price || 0)).toFixed(0);
+    return `<tr>
+      <td style="font-weight:600">${b.bowl_name}</td>
+      <td><span class="badge badge-yellow">${b.order_count}</span></td>
+      <td><span class="stars" style="font-size:12px">${stars}</span>${b.avg_feedback > 0 ? ' ' + b.avg_feedback.toFixed(1) : ''}</td>
+      <td style="color:var(--dim)">$${parseInt(rev).toLocaleString()}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderOrdersTable(orders) {
+  const tbody = document.getElementById('orders-tbody');
+  tbody.innerHTML = orders.map(o => {
+    const score = o.feedback_score;
+    const scoreBadge = score ? `<span class="badge badge-yellow">${'★'.repeat(score)}</span>` : `<span class="badge badge-dim">—</span>`;
+    const statusBadge = o.status === 'completed'
+      ? `<span class="badge badge-green">completed</span>`
+      : `<span class="badge badge-dim">${o.status}</span>`;
+    const ts = new Date(o.created_at + 'Z').toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+    return `<tr>
+      <td style="font-family:monospace;font-size:12px;color:var(--dim)">${o.order_id}</td>
+      <td style="font-weight:600">${o.bowl_name || o.bowl_id}</td>
+      <td style="color:var(--dim)">${o.group_size > 1 ? o.group_size + ' ppl' : 'solo'}</td>
+      <td>${statusBadge}</td>
+      <td>${scoreBadge}</td>
+      <td style="color:var(--dim);font-size:12px">${ts}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAlerts(alerts) {
+  const iconMap = { warning: '⚠️', info: 'ℹ️', ok: '✅' };
+  const classMap = { warning: 'alert-warning', info: 'alert-info', ok: 'alert-ok' };
+  document.getElementById('alerts-body').innerHTML = alerts.map(a => `
+    <div class="alert ${classMap[a.level] || 'alert-info'}">
+      <div class="alert-icon">${iconMap[a.level] || 'ℹ️'}</div>
+      <div class="alert-text">
+        <strong>${a.bowl}</strong>
+        <small>${a.message}</small>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderForecast(f) {
+  document.getElementById('forecast-body').innerHTML = `
+    <div class="forecast-box">
+      <div class="forecast-label">Peak window</div>
+      <div class="forecast-value">${f.peak_window}</div>
+      <div class="forecast-note">${f.expected_orders} orders expected · ${f.note}</div>
+    </div>
+  `;
+}
+
+loadDashboard();
+setInterval(loadDashboard, 30000);
+</script>
+</body>
+</html>
