@@ -218,11 +218,18 @@
 <!-- Right panel -->
 <aside class="side-panel">
   <div class="panel-section">
-    <div class="panel-label">Legend</div>
+    <div class="panel-label">Nodes</div>
     <div class="legend-item"><div class="legend-dot bowl"></div><span>Bowl</span><span class="legend-count" id="leg-bowl">—</span></div>
     <div class="legend-item"><div class="legend-dot ingredient"></div><span>Ingredient</span><span class="legend-count" id="leg-ing">—</span></div>
     <div class="legend-item"><div class="legend-dot tag"></div><span>Taste Tag</span><span class="legend-count" id="leg-tag">—</span></div>
     <div class="legend-item"><div class="legend-dot segment"></div><span>Preference Segment</span><span class="legend-count" id="leg-seg">—</span></div>
+  </div>
+  <div class="panel-section">
+    <div class="panel-label">Particle flow = relationship intensity</div>
+    <div class="legend-item"><div class="legend-dot ingredient" style="border-radius:2px"></div><span style="font-size:11px">Ingredient bond</span></div>
+    <div class="legend-item"><div class="legend-dot tag" style="border-radius:2px"></div><span style="font-size:11px">Taste classification</span></div>
+    <div class="legend-item"><div class="legend-dot segment" style="border-radius:2px"></div><span style="font-size:11px">Customer preference</span></div>
+    <div style="font-size:10px;color:var(--dim);margin-top:8px;line-height:1.7">Larger · slower · brighter<br>= more orders on that edge</div>
   </div>
   <div class="panel-section" style="padding:12px 16px">
     <div class="panel-label">Interaction</div>
@@ -265,10 +272,17 @@ const COLOR = {
 };
 
 const GLOW = {
-  bowl:       '0,200,60',
+  bowl:       '255,208,64',
   ingredient: '0,255,136',
   tag:        '0,200,255',
   segment:    '255,112,64',
+};
+
+// Particle color = edge relationship type, not source node
+const EDGE_PARTICLE_COLOR = {
+  contains: '0,255,136',   // green  — ingredient bond
+  tag:      '0,200,255',   // cyan   — taste classification
+  prefers:  '255,112,64',  // orange — customer preference signal
 };
 
 const BASE_RADIUS = { bowl: 22, ingredient: 9, tag: 7, segment: 12 };
@@ -293,46 +307,58 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
+// Precomputed once after data loads
+let maxEdgeWeight = 1;
+
 class Particle {
-  constructor(edge) {
+  constructor(edge, intensity) {
     this.edge = edge;
     this.t = 0;
-    this.speed = 0.004 + Math.random() * 0.005;
-    this.r = 1.2 + Math.random() * 0.8;
-    this.alpha = 0.5 + Math.random() * 0.5;
-    const type = edge.source.type || 'bowl';
-    const [r,g,b] = GLOW[type].split(',');
-    this.color = `${r},${g},${b}`;
+    // High-intensity edges: slower, larger, more opaque — you can feel the weight
+    this.speed = 0.012 - intensity * 0.008;   // 0.004–0.012
+    this.r    = 1.0  + intensity * 3.5;        // 1–4.5 px radius
+    this.alpha = 0.35 + intensity * 0.55;      // 0.35–0.9 opacity
+    this.color = EDGE_PARTICLE_COLOR[edge.type] || '200,200,200';
   }
+
   update() { this.t += this.speed; return this.t < 1; }
+
   draw() {
     const s = this.edge.source, tg = this.edge.target;
-    if (!s.x || !tg.x) return;
-    // Cubic ease along straight line
+    if (s.x == null || tg.x == null) return;
     const et = this.t < 0.5 ? 2*this.t*this.t : -1+(4-2*this.t)*this.t;
     const x = s.x + (tg.x - s.x) * et;
     const y = s.y + (tg.y - s.y) * et;
-    const fade = this.alpha * (1 - Math.pow(Math.abs(this.t - 0.5) * 2, 2) * 0.5);
-    // Core
+    // Fade at the endpoints so particles feel like they emerge/absorb
+    const edgeFade = 1 - Math.pow(Math.abs(this.t - 0.5) * 2, 2.5) * 0.6;
+    const a = this.alpha * edgeFade;
+    // Core dot
     ctx.beginPath();
     ctx.arc(x, y, this.r, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,255,255,${fade * 0.9})`;
+    ctx.fillStyle = `rgba(${this.color},${a})`;
     ctx.fill();
-    // Glow halo
-    ctx.beginPath();
-    ctx.arc(x, y, this.r * 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${this.color},${fade * 0.2})`;
-    ctx.fill();
+    // Soft glow proportional to intensity
+    if (this.r > 1.8) {
+      ctx.beginPath();
+      ctx.arc(x, y, this.r * 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${this.color},${a * 0.12})`;
+      ctx.fill();
+    }
   }
 }
 
 function spawnParticles(edges) {
   if (!edges) return;
   edges.forEach(edge => {
-    const rate = Math.min((edge.weight || 1) * 0.006, 0.08);
-    if (Math.random() < rate) particles.push(new Particle(edge));
+    const w = edge.weight || 0;
+    // Skip edges with negligible weight — no signal, no particle
+    if (w < 3) return;
+    const intensity = Math.min(w / maxEdgeWeight, 1);
+    // Spawn rate scales quadratically with intensity so top edges feel dominant
+    const rate = 0.015 + Math.pow(intensity, 1.4) * 0.10;
+    if (Math.random() < rate) particles.push(new Particle(edge, intensity));
   });
-  if (particles.length > 400) particles.splice(0, particles.length - 400);
+  if (particles.length > 350) particles.splice(0, particles.length - 350);
 }
 
 function drawParticles() {
@@ -350,6 +376,9 @@ function nodeRadius(d) {
 function buildGraph(data) {
   graphData = data;
   const { nodes, edges, meta } = data;
+
+  // Precompute max weight so particles scale correctly
+  maxEdgeWeight = Math.max(...edges.map(e => e.weight || 1), 1);
 
   // HUD counters
   document.getElementById('hud-nodes').textContent = meta.total_nodes;
@@ -405,16 +434,18 @@ function buildGraph(data) {
 
   // ── Edges ────────────────────────────────────────────────────────────────
   const edgeG = container.append('g');
+  const EDGE_LINE_COLOR = { contains: '#00FF88', tag: '#00C8FF', prefers: '#FF7040' };
   const edgeLines = edgeG.selectAll('line')
     .data(edges).join('line')
-    .attr('stroke', d => {
-      const src = nodes.find(n => n.id === (d.source.id || d.source));
-      return src ? COLOR[src.type] : '#fff';
+    .attr('stroke', d => EDGE_LINE_COLOR[d.type] || '#aaa')
+    .attr('stroke-opacity', d => {
+      // Opacity = intensity of the relationship
+      const intensity = Math.min((d.weight || 1) / maxEdgeWeight, 1);
+      return 0.06 + intensity * 0.30;
     })
-    .attr('stroke-opacity', 0.18)
     .attr('stroke-width', d => {
-      const w = d.weight || 1;
-      return Math.min(0.5 + w * 0.018, 2.5);
+      const intensity = Math.min((d.weight || 1) / maxEdgeWeight, 1);
+      return 0.4 + intensity * 2.0;
     });
 
   // ── Nodes ────────────────────────────────────────────────────────────────
